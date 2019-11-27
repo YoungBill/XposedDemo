@@ -19,6 +19,9 @@ class Main : IXposedHookLoadPackage {
     private var ISHOOK_PACKAGE_TEST = false
     private val HOOK_PACKAGE_NAME_TEST = "com.android.test"
 
+    private var ISHOOK_PACKAGE_YIDUI = false
+    private val HOOK_PACKAGE_NAME_YIDUI = "me.yidui"
+
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
         val packageName = lpparam.packageName
         val processName = lpparam.processName
@@ -45,6 +48,34 @@ class Main : IXposedHookLoadPackage {
                                 ).show()
 
                                 AndroidTestHook().hook(appClassLoader, context)
+                            }
+                        }
+                    })
+            } catch (e: Throwable) {
+                XposedBridge.log(e)
+            }
+        }
+
+        if (HOOK_PACKAGE_NAME_YIDUI == packageName) {
+            try {
+                XposedHelpers.findAndHookMethod(
+                    Application::class.java,
+                    "attach",
+                    Context::class.java,
+                    object : XC_MethodHook() {
+                        override fun afterHookedMethod(param: XC_MethodHook.MethodHookParam) {
+                            super.afterHookedMethod(param)
+                            val context = param.args[0] as Context
+                            val appClassLoader = context.classLoader
+                            if (HOOK_PACKAGE_NAME_YIDUI == processName && !ISHOOK_PACKAGE_YIDUI) {
+                                ISHOOK_PACKAGE_TEST = true
+                                Toast.makeText(
+                                    context,
+                                    "获取到伊对=>>classloader: $appClassLoader",
+                                    Toast.LENGTH_LONG
+                                ).show()
+
+                                YiduiHook().hook(appClassLoader, context)
                             }
                         }
                     })
